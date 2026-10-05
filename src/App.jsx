@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import heroImg from "./assets/hero.png";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "./assets/vite.svg";
@@ -8,6 +8,41 @@ import TestTable from "./TestTable";
 function App() {
   const [count, setCount] = useState(0);
   const [showStartTable, setShowStartTable] = useState(true);
+  const [weather, setWeather] = useState(null);
+  const [weatherError, setWeatherError] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadWeather() {
+      try {
+        const response = await fetch(
+          "https://api.open-meteo.com/v1/forecast?latitude=54.6872&longitude=25.2797&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_direction_10m_dominant&timezone=Europe%2FVilnius&forecast_days=1",
+          { signal: controller.signal },
+        );
+        if (!response.ok) throw new Error("Nepavyko gauti orų duomenų");
+        const data = await response.json();
+        setWeather({ date: data.daily.time[0], code: data.daily.weather_code[0], max: data.daily.temperature_2m_max[0], min: data.daily.temperature_2m_min[0], precipitation: data.daily.precipitation_sum[0], wind: data.daily.wind_direction_10m_dominant[0] });
+      } catch (error) {
+        if (error.name !== "AbortError") setWeatherError(true);
+      }
+    }
+
+    loadWeather();
+    return () => controller.abort();
+  }, []);
+
+  const weatherDescriptions = {
+    0: "Giedra", 1: "Daugiausia giedra", 2: "Nepastoviai debesuota", 3: "Debesuota",
+    45: "Rūkas", 48: "Šerkšną keliantis rūkas", 51: "Silpna dulksna", 53: "Dulksna",
+    55: "Tanki dulksna", 56: "Silpna lijundra", 57: "Stipri lijundra", 61: "Silpnas lietus",
+    63: "Lietus", 65: "Stiprus lietus", 66: "Silpnas lijundros lietus", 67: "Stiprus lijundros lietus",
+    71: "Silpnas sniegas", 73: "Sniegas", 75: "Stiprus sniegas", 77: "Sniego kruopos",
+    80: "Silpni lietaus šuorai", 81: "Lietaus šuorai", 82: "Stiprūs lietaus šuorai",
+    85: "Silpni sniego šuorai", 86: "Stiprūs sniego šuorai", 95: "Perkūnija", 96: "Perkūnija su kruša", 99: "Stipri perkūnija su kruša",
+  };
+  const windDirections = ["Š", "ŠR", "R", "PR", "P", "PV", "V", "ŠV"];
+  const formatDate = (date) => new Intl.DateTimeFormat("lt-LT", { day: "numeric", month: "long" }).format(new Date(`${date}T12:00:00`));
 
   if (showStartTable) {
     return (
@@ -36,15 +71,17 @@ function App() {
                     </svg>
                   </div>
                   <div className="weather-card__content">
-                    <p className="weather-card__eyebrow">Šiandien • Vilnius</p>
+                    <p className="weather-card__eyebrow">{weather ? `${formatDate(weather.date)} • Vilnius` : "Šiandien • Vilnius"}</p>
                     <h2 id="weather-title">Orų prognozė</h2>
-                    <p className="weather-card__summary">Mažai debesuota</p>
+                    <p className="weather-card__summary">
+                      {weather ? weatherDescriptions[weather.code] ?? "Orai" : weatherError ? "Orų duomenų gauti nepavyko" : "Kraunami šiandienos orai…"}
+                    </p>
                     <div className="weather-card__details">
-                      <div><span>Temperatūra</span><strong>10–19 °C</strong></div>
-                      <div><span>Vėjo kryptis</span><strong>Rytų (R)</strong></div>
-                      <div><span>Krituliai</span><strong>0 mm</strong></div>
+                      <div><span>Temperatūra</span><strong>{weather ? `${Math.round(weather.min)}–${Math.round(weather.max)} °C` : "—"}</strong></div>
+                      <div><span>Vėjo kryptis</span><strong>{weather ? windDirections[Math.round(weather.wind / 45) % 8] : "—"}</strong></div>
+                      <div><span>Krituliai</span><strong>{weather ? `${weather.precipitation} mm` : "—"}</strong></div>
                     </div>
-                    <p className="weather-card__source">Duomenys: Lietuvos hidrometeorologijos tarnyba</p>
+                    <p className="weather-card__source">Duomenys: Open-Meteo</p>
                   </div>
                 </section>
               </td>
@@ -178,3 +215,4 @@ function App() {
 }
 
 export default App;
+
