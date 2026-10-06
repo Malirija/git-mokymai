@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './TestTable.css'
+import StatusSummary from './StatusSummary'
 
 const initialData = [
   {
@@ -84,6 +85,8 @@ function TestTable() {
           ))}
         </tbody>
       </table>
+
+      <StatusSummary rows={rows} />
     </div>
   )
 }
