@@ -1,0 +1,123 @@
+.tasks-page {
+  width: min(720px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 48px 0;
+  color: var(--text-h);
+  text-align: left;
+}
+
+.tasks-page__back {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #287a42;
+}
+
+.tasks-page h1 {
+  margin: 0 0 24px;
+  color: #246b39;
+  font-size: 36px;
+  letter-spacing: -0.5px;
+}
+
+.tasks-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tasks-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #a9cbb1;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.tasks-form button {
+  padding: 10px 16px;
+  border: 1px solid #78a985;
+  border-radius: 6px;
+  background: #e7f3e9;
+  color: #205d32;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tasks-form button:hover {
+  background: #d7eadb;
+}
+
+.tasks-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tasks-filters__button {
+  padding: 7px 12px;
+  border: 1px solid #a9cbb1;
+  border-radius: 6px;
+  background: var(--bg);
+  color: #205d32;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tasks-filters__button:hover {
+  background: #f0f7f1;
+}
+
+.tasks-filters__button--active,
+.tasks-filters__button--active:hover {
+  border-color: #367a48;
+  background: #367a48;
+  color: #fff;
+}
+
+@media (max-width: 480px) {
+  .tasks-form {
+    flex-direction: column;
+  }
+}
+
+.tasks-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg);
+}
+
+.tasks-table th,
+.tasks-table td {
+  padding: 14px 16px;
+  border: 1px solid #a9cbb1;
+  text-align: left;
+}
+
+.tasks-table th {
+  background: #e7f3e9;
+  color: #205d32;
+}
+
+.tasks-status {
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #a9cbb1;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tasks-status:focus-visible {
+  outline: 2px solid #78a985;
+  outline-offset: 2px;
+}
+
+.tasks-table tbody tr:nth-child(even) {
+  background: #f5faf6;
+}

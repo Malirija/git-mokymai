@@ -15,6 +15,21 @@
   font-size: 1.25rem;
 }
 
+.task-manager-link {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 9px 14px;
+  border: 1px solid #78a985;
+  border-radius: 6px;
+  background: #e7f3e9;
+  color: #205d32;
+  text-decoration: none;
+}
+
+.task-manager-link:hover {
+  background: #d7eadb;
+}
+
 .start-table .counter {
   margin-bottom: 0;
 }
