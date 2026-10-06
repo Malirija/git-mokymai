@@ -4,8 +4,13 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "./assets/vite.svg";
 import "./App.css";
 import TestTable from "./TestTable";
+import TasksPage from "./pages/TasksPage";
 
 function App() {
+  if (window.location.pathname === "/tasks") {
+    return <TasksPage />;
+  }
+
   const [count, setCount] = useState(0);
   const [showStartTable, setShowStartTable] = useState(true);
   const [weather, setWeather] = useState(null);
@@ -51,6 +56,9 @@ function App() {
           <tbody>
             <tr>
               <td>
+                <a className="task-manager-link" href="/tasks">
+                  Open Task Manager
+                </a>
                 <p>Pradedam cia</p>
 
                 <button
