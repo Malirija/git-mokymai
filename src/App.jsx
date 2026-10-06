@@ -27,7 +27,14 @@ function App() {
         );
         if (!response.ok) throw new Error("Nepavyko gauti orų duomenų");
         const data = await response.json();
-        setWeather({ date: data.daily.time[0], code: data.daily.weather_code[0], max: data.daily.temperature_2m_max[0], min: data.daily.temperature_2m_min[0], precipitation: data.daily.precipitation_sum[0], wind: data.daily.wind_direction_10m_dominant[0] });
+        setWeather({
+          date: data.daily.time[0],
+          code: data.daily.weather_code[0],
+          max: data.daily.temperature_2m_max[0],
+          min: data.daily.temperature_2m_min[0],
+          precipitation: data.daily.precipitation_sum[0],
+          wind: data.daily.wind_direction_10m_dominant[0],
+        });
       } catch (error) {
         if (error.name !== "AbortError") setWeatherError(true);
       }
@@ -38,16 +45,40 @@ function App() {
   }, []);
 
   const weatherDescriptions = {
-    0: "Giedra", 1: "Daugiausia giedra", 2: "Nepastoviai debesuota", 3: "Debesuota",
-    45: "Rūkas", 48: "Šerkšną keliantis rūkas", 51: "Silpna dulksna", 53: "Dulksna",
-    55: "Tanki dulksna", 56: "Silpna lijundra", 57: "Stipri lijundra", 61: "Silpnas lietus",
-    63: "Lietus", 65: "Stiprus lietus", 66: "Silpnas lijundros lietus", 67: "Stiprus lijundros lietus",
-    71: "Silpnas sniegas", 73: "Sniegas", 75: "Stiprus sniegas", 77: "Sniego kruopos",
-    80: "Silpni lietaus šuorai", 81: "Lietaus šuorai", 82: "Stiprūs lietaus šuorai",
-    85: "Silpni sniego šuorai", 86: "Stiprūs sniego šuorai", 95: "Perkūnija", 96: "Perkūnija su kruša", 99: "Stipri perkūnija su kruša",
+    0: "Giedra",
+    1: "Daugiausia giedra",
+    2: "Nepastoviai debesuota",
+    3: "Debesuota",
+    45: "Rūkas",
+    48: "Šerkšną keliantis rūkas",
+    51: "Silpna dulksna",
+    53: "Dulksna",
+    55: "Tanki dulksna",
+    56: "Silpna lijundra",
+    57: "Stipri lijundra",
+    61: "Silpnas lietus",
+    63: "Lietus",
+    65: "Stiprus lietus",
+    66: "Silpnas lijundros lietus",
+    67: "Stiprus lijundros lietus",
+    71: "Silpnas sniegas",
+    73: "Sniegas",
+    75: "Stiprus sniegas",
+    77: "Sniego kruopos",
+    80: "Silpni lietaus šuorai",
+    81: "Lietaus šuorai",
+    82: "Stiprūs lietaus šuorai",
+    85: "Silpni sniego šuorai",
+    86: "Stiprūs sniego šuorai",
+    95: "Perkūnija",
+    96: "Perkūnija su kruša",
+    99: "Stipri perkūnija su kruša",
   };
   const windDirections = ["Š", "ŠR", "R", "PR", "P", "PV", "V", "ŠV"];
-  const formatDate = (date) => new Intl.DateTimeFormat("lt-LT", { day: "numeric", month: "long" }).format(new Date(`${date}T12:00:00`));
+  const formatDate = (date) =>
+    new Intl.DateTimeFormat("lt-LT", { day: "numeric", month: "long" }).format(
+      new Date(`${date}T12:00:00`),
+    );
 
   if (showStartTable) {
     return (
@@ -69,25 +100,64 @@ function App() {
                   click
                 </button>
                 <TestTable />
-                <section className="weather-card" aria-labelledby="weather-title">
+                <section
+                  className="weather-card"
+                  aria-labelledby="weather-title"
+                >
                   <div className="weather-card__visual" aria-hidden="true">
                     <svg viewBox="0 0 240 160" role="presentation">
                       <circle cx="168" cy="55" r="24" className="weather-sun" />
-                      <path className="weather-cloud" d="M56 105h115a20 20 0 0 0 0-40 31 31 0 0 0-59-8 25 25 0 0 0-40 20 14 14 0 0 0-16 14 14 14 0 0 0 14 14Z" />
-                      <path className="weather-rain" d="m83 119-7 15m37-15-7 15m37-15-7 15" />
-                      <path className="weather-swoosh" d="M29 48c17-9 31-9 45 0M26 60c10-5 19-5 28-1" />
+                      <path
+                        className="weather-cloud"
+                        d="M56 105h115a20 20 0 0 0 0-40 31 31 0 0 0-59-8 25 25 0 0 0-40 20 14 14 0 0 0-16 14 14 14 0 0 0 14 14Z"
+                      />
+                      <path
+                        className="weather-rain"
+                        d="m83 119-7 15m37-15-7 15m37-15-7 15"
+                      />
+                      <path
+                        className="weather-swoosh"
+                        d="M29 48c17-9 31-9 45 0M26 60c10-5 19-5 28-1"
+                      />
                     </svg>
                   </div>
                   <div className="weather-card__content">
-                    <p className="weather-card__eyebrow">{weather ? `${formatDate(weather.date)} • Vilnius` : "Šiandien • Vilnius"}</p>
+                    <p className="weather-card__eyebrow">
+                      {weather
+                        ? `${formatDate(weather.date)} • Vilnius`
+                        : "Šiandien • Vilnius"}
+                    </p>
                     <h2 id="weather-title">Orų prognozė</h2>
                     <p className="weather-card__summary">
-                      {weather ? weatherDescriptions[weather.code] ?? "Orai" : weatherError ? "Orų duomenų gauti nepavyko" : "Kraunami šiandienos orai…"}
+                      {weather
+                        ? (weatherDescriptions[weather.code] ?? "Orai")
+                        : weatherError
+                          ? "Orų duomenų gauti nepavyko"
+                          : "Kraunami šiandienos orai…"}
                     </p>
                     <div className="weather-card__details">
-                      <div><span>Temperatūra</span><strong>{weather ? `${Math.round(weather.min)}–${Math.round(weather.max)} °C` : "—"}</strong></div>
-                      <div><span>Vėjo kryptis</span><strong>{weather ? windDirections[Math.round(weather.wind / 45) % 8] : "—"}</strong></div>
-                      <div><span>Krituliai</span><strong>{weather ? `${weather.precipitation} mm` : "—"}</strong></div>
+                      <div>
+                        <span>Temperatūra</span>
+                        <strong>
+                          {weather
+                            ? `${Math.round(weather.min)}–${Math.round(weather.max)} °C`
+                            : "—"}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Vėjo kryptis</span>
+                        <strong>
+                          {weather
+                            ? windDirections[Math.round(weather.wind / 45) % 8]
+                            : "—"}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Krituliai</span>
+                        <strong>
+                          {weather ? `${weather.precipitation} mm` : "—"}
+                        </strong>
+                      </div>
                     </div>
                     <p className="weather-card__source">Duomenys: Open-Meteo</p>
                   </div>
@@ -223,4 +293,3 @@ function App() {
 }
 
 export default App;
-
