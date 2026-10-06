@@ -19,9 +19,17 @@ const initialTasks = [
   },
 ]
 
+const taskFilters = ['All', 'Todo', 'In Progress', 'Done']
+
 function TasksPage() {
   const [tasks, setTasks] = useState(initialTasks)
   const [taskName, setTaskName] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState('All')
+
+  const filteredTasks =
+    selectedFilter === 'All'
+      ? tasks
+      : tasks.filter((task) => task.status === selectedFilter)
 
   function handleAddTask(event) {
     event.preventDefault()
@@ -37,6 +45,14 @@ function TasksPage() {
       },
     ])
     setTaskName('')
+  }
+
+  function handleStatusChange(id, newStatus) {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === id ? { ...task, status: newStatus } : task
+      )
+    )
   }
 
   return (
@@ -55,6 +71,19 @@ function TasksPage() {
         />
         <button type="submit">Add Task</button>
       </form>
+      <div className="tasks-filters" aria-label="Filter tasks by status">
+        {taskFilters.map((filter) => (
+          <button
+            className={`tasks-filters__button${selectedFilter === filter ? ' tasks-filters__button--active' : ''}`}
+            type="button"
+            key={filter}
+            aria-pressed={selectedFilter === filter}
+            onClick={() => setSelectedFilter(filter)}
+          >
+            {filter}
+          </button>
+        ))}
+      </div>
       <table className="tasks-table">
         <thead>
           <tr>
@@ -63,10 +92,23 @@ function TasksPage() {
           </tr>
         </thead>
         <tbody>
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <tr key={task.id}>
               <td>{task.title}</td>
-              <td>{task.status}</td>
+              <td>
+                <select
+                  className="tasks-status"
+                  value={task.status}
+                  onChange={(event) =>
+                    handleStatusChange(task.id, event.target.value)
+                  }
+                  aria-label={`Status for ${task.title}`}
+                >
+                  <option value="Todo">Todo</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Done">Done</option>
+                </select>
+              </td>
             </tr>
           ))}
         </tbody>

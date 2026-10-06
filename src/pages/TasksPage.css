@@ -50,6 +50,34 @@
   background: #d7eadb;
 }
 
+.tasks-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tasks-filters__button {
+  padding: 7px 12px;
+  border: 1px solid #a9cbb1;
+  border-radius: 6px;
+  background: var(--bg);
+  color: #205d32;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tasks-filters__button:hover {
+  background: #f0f7f1;
+}
+
+.tasks-filters__button--active,
+.tasks-filters__button--active:hover {
+  border-color: #367a48;
+  background: #367a48;
+  color: #fff;
+}
+
 @media (max-width: 480px) {
   .tasks-form {
     flex-direction: column;
@@ -72,6 +100,22 @@
 .tasks-table th {
   background: #e7f3e9;
   color: #205d32;
+}
+
+.tasks-status {
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #a9cbb1;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tasks-status:focus-visible {
+  outline: 2px solid #78a985;
+  outline-offset: 2px;
 }
 
 .tasks-table tbody tr:nth-child(even) {
