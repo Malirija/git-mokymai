@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import './TasksPage.css'
 
-const tasks = [
+const initialTasks = [
   {
     id: 1,
     title: 'Learn React',
@@ -19,12 +20,41 @@ const tasks = [
 ]
 
 function TasksPage() {
+  const [tasks, setTasks] = useState(initialTasks)
+  const [taskName, setTaskName] = useState('')
+
+  function handleAddTask(event) {
+    event.preventDefault()
+
+    if (!taskName.trim()) return
+
+    setTasks((currentTasks) => [
+      ...currentTasks,
+      {
+        id: Date.now(),
+        title: taskName,
+        status: 'Todo',
+      },
+    ])
+    setTaskName('')
+  }
+
   return (
     <main className="tasks-page">
       <a className="tasks-page__back" href="/">
         Back to Home
       </a>
       <h1>Task Manager</h1>
+      <form className="tasks-form" onSubmit={handleAddTask}>
+        <input
+          type="text"
+          value={taskName}
+          onChange={(event) => setTaskName(event.target.value)}
+          placeholder="Enter task name"
+          aria-label="Enter task name"
+        />
+        <button type="submit">Add Task</button>
+      </form>
       <table className="tasks-table">
         <thead>
           <tr>

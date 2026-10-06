@@ -19,6 +19,43 @@
   letter-spacing: -0.5px;
 }
 
+.tasks-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tasks-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #a9cbb1;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.tasks-form button {
+  padding: 10px 16px;
+  border: 1px solid #78a985;
+  border-radius: 6px;
+  background: #e7f3e9;
+  color: #205d32;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tasks-form button:hover {
+  background: #d7eadb;
+}
+
+@media (max-width: 480px) {
+  .tasks-form {
+    flex-direction: column;
+  }
+}
+
 .tasks-table {
   width: 100%;
   border-collapse: collapse;
