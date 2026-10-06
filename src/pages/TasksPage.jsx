@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './TasksPage.css'
+
+const STORAGE_KEY = 'task-manager-tasks'
 
 const initialTasks = [
   {
@@ -20,11 +22,42 @@ const initialTasks = [
 ]
 
 const taskFilters = ['All', 'Todo', 'In Progress', 'Done']
+const validStatuses = ['Todo', 'In Progress', 'Done']
+
+function loadTasks() {
+  try {
+    const savedTasks = localStorage.getItem(STORAGE_KEY)
+    if (!savedTasks) return initialTasks
+
+    const parsedTasks = JSON.parse(savedTasks)
+    const isValidTasks =
+      Array.isArray(parsedTasks) &&
+      parsedTasks.every(
+        (task) =>
+          task &&
+          (typeof task.id === 'number' || typeof task.id === 'string') &&
+          typeof task.title === 'string' &&
+          validStatuses.includes(task.status)
+      )
+
+    return isValidTasks ? parsedTasks : initialTasks
+  } catch {
+    return initialTasks
+  }
+}
 
 function TasksPage() {
-  const [tasks, setTasks] = useState(initialTasks)
+  const [tasks, setTasks] = useState(loadTasks)
   const [taskName, setTaskName] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('All')
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
+    } catch {
+      // Keep the page usable if browser storage is unavailable.
+    }
+  }, [tasks])
 
   const filteredTasks =
     selectedFilter === 'All'
