@@ -4,7 +4,7 @@ import './TasksPage.css'
 
 const taskFilters = ['All', 'Todo', 'In Progress', 'Done']
 
-function TasksPage({ onLogout }) {
+function TasksPage({ onLogout, userId }) {
   const [tasks, setTasks] = useState([])
   const [taskName, setTaskName] = useState('')
   const [taskNameError, setTaskNameError] = useState('')
@@ -28,7 +28,8 @@ function TasksPage({ onLogout }) {
         if (!Array.isArray(taskList)) {
           throw new Error('API response is not a task list')
         }
-        if (isActive) setTasks(taskList)
+        const userTasks = taskList.filter((task) => String(task.userId) === String(userId))
+        if (isActive) setTasks(userTasks)
       } catch {
         if (isActive) setLoadTasksError('Nepavyko įkelti užduočių iš duomenų bazės.')
       } finally {
@@ -40,7 +41,7 @@ function TasksPage({ onLogout }) {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [userId])
 
   const filteredTasks =
     selectedFilter === 'All'
@@ -61,7 +62,7 @@ function TasksPage({ onLogout }) {
     setAddTaskError('')
     setIsAddingTask(true)
     try {
-      const createdTask = await createTask({ title, status: 'Todo' })
+      const createdTask = await createTask({ title, status: 'Todo', userId })
       if (createdTask) {
         setTasks((currentTasks) => [...currentTasks, createdTask])
         setTaskName('')
@@ -82,7 +83,7 @@ function TasksPage({ onLogout }) {
     setStatusTaskError('')
     setStatusTaskIds((currentIds) => [...currentIds, id])
     try {
-      await updateTaskStatus(id, currentTask.title, newStatus)
+      await updateTaskStatus(id, currentTask.title, newStatus, userId)
       setTasks((currentTasks) =>
         currentTasks.map((task) =>
           task.id === id ? { ...task, status: newStatus } : task

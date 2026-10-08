@@ -18,7 +18,7 @@ async function request(path, options = {}) {
   return response.json()
 }
 
-// GET /tasks — retrieve all tasks.
+// GET /tasks — retrieve tasks, including their userId field.
 export function getTasks() {
   return request('/tasks')
 }
@@ -32,10 +32,10 @@ export function createTask(task) {
 }
 
 // PUT /tasks/:id — update a task's status.
-export function updateTaskStatus(taskId, title, status) {
+export function updateTaskStatus(taskId, title, status, userId) {
   return request(`/tasks/${encodeURIComponent(taskId)}`, {
     method: 'PUT',
-    body: JSON.stringify({ title, status }),
+    body: JSON.stringify({ title, status, userId }),
   })
 }
 
