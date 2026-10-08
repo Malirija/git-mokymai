@@ -8,8 +8,28 @@
 
 .tasks-page__back {
   display: inline-block;
-  margin-bottom: 20px;
   color: #287a42;
+}
+
+.tasks-page__top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.tasks-page__logout {
+  padding: 8px 12px;
+  border: 1px solid #a9cbb1;
+  border-radius: 6px;
+  background: var(--bg);
+  color: #205d32;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tasks-page__logout:hover {
+  background: #e7f3e9;
 }
 
 .tasks-page h1 {

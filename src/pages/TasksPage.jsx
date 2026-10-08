@@ -4,7 +4,7 @@ import './TasksPage.css'
 
 const taskFilters = ['All', 'Todo', 'In Progress', 'Done']
 
-function TasksPage() {
+function TasksPage({ onLogout }) {
   const [tasks, setTasks] = useState([])
   const [taskName, setTaskName] = useState('')
   const [taskNameError, setTaskNameError] = useState('')
@@ -112,9 +112,14 @@ function TasksPage() {
 
   return (
     <main className="tasks-page">
-      <a className="tasks-page__back" href="/">
-        Back to Home
-      </a>
+      <div className="tasks-page__top-bar">
+        <a className="tasks-page__back" href="/">
+          Back to Home
+        </a>
+        <button className="tasks-page__logout" type="button" onClick={onLogout}>
+          Log off
+        </button>
+      </div>
       <h1>Task Manager</h1>
       <form className="tasks-form" onSubmit={handleAddTask}>
         <input
