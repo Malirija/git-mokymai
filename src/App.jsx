@@ -6,14 +6,78 @@ import "./App.css";
 import "./pages/SignPage.css";
 import TestTable from "./TestTable";
 import TasksPage from "./pages/TasksPage";
-import { createUser, getUsers } from "./api/usersApi";
+import { onAuthStateChange, signIn, signOut, signUp, getSession } from "./api/usersApi";
+import { supabaseConfigError } from "./lib/supabase";
 
-const AUTH_STORAGE_KEY = "task-manager-authenticated-user";
+function getAuthErrorMessage(error, isRegistering) {
+  if (error.message?.includes("Supabase nustatymai neužpildyti")) {
+    return error.message;
+  }
+  const message = error.message?.toLowerCase() ?? "";
+  const code = error.code?.toLowerCase() ?? "";
 
-function LoginPage({ onLogin }) {
+  if (code === "email_not_confirmed" || message.includes("email not confirmed")) {
+    return "Patvirtinkite el. paštą pagal jums išsiųstą nuorodą ir bandykite prisijungti.";
+  }
+  if (
+    ["user_already_exists", "email_exists"].includes(code) ||
+    message.includes("already registered") ||
+    message.includes("already exists")
+  ) {
+    return "Šis el. pašto adresas jau užregistruotas.";
+  }
+  if (
+    code === "weak_password" ||
+    message.includes("password should be at least") ||
+    message.includes("password is too short")
+  ) {
+    const minimumLength = message.match(/at least (\d+) characters?/);
+    return minimumLength
+      ? `Slaptažodį turi sudaryti bent ${minimumLength[1]} simboliai.`
+      : "Pasirinkite ilgesnį slaptažodį.";
+  }
+  if (
+    message.includes("invalid email") ||
+    message.includes("email address is invalid")
+  ) {
+    return "Įveskite galiojantį el. pašto adresą.";
+  }
+  if (
+    ["signup_disabled", "email_provider_disabled"].includes(code) ||
+    message.includes("signups not allowed") ||
+    message.includes("signups are disabled")
+  ) {
+    return "Registracija šiuo metu išjungta. Įjunkite el. pašto registraciją Supabase Auth nustatymuose.";
+  }
+  if (code === "validation_failed") {
+    return "Patikrinkite įvestą vardą, el. paštą ir slaptažodį.";
+  }
+  if (message.includes("rate limit") || code.includes("rate_limit")) {
+    return "Per daug bandymų per trumpą laiką. Palaukite ir bandykite dar kartą.";
+  }
+  if (message.includes("database error saving new user")) {
+    return "Registracijos šiuo metu užbaigti nepavyko. Pabandykite vėliau arba kreipkitės į administratorių.";
+  }
+  if (
+    !isRegistering &&
+    ["invalid_credentials", "invalid_login_credentials"].includes(code) ||
+    (!isRegistering && message.includes("invalid login credentials"))
+  ) {
+    return "Neteisingas el. pašto adresas arba slaptažodis.";
+  }
+  if (isRegistering && error.status === 422) {
+    return "Registracija atmesta. Patikrinkite el. pašto adresą, slaptažodžio reikalavimus ir ar šis el. paštas jau nėra užregistruotas.";
+  }
+  return isRegistering
+    ? "Nepavyko užregistruoti paskyros. Patikrinkite duomenis ir bandykite dar kartą."
+    : "Nepavyko prisijungti. Patikrinkite duomenis arba interneto ryšį.";
+}
+
+function LoginPage({ onLogin, initialError }) {
   const [userName, setUserName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
+  const [loginError, setLoginError] = useState(initialError);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,40 +87,30 @@ function LoginPage({ onLogin }) {
     if (isSubmitting) return;
 
     const name = userName.trim();
-    if (!name || !password) {
-      setLoginError("Įveskite vartotojo vardą ir slaptažodį.");
+    const normalizedEmail = email.trim();
+    if ((isRegistering && !name) || !normalizedEmail || !password) {
+      setLoginError("Įveskite el. paštą, slaptažodį ir registruojantis vardą.");
       return;
     }
 
     setIsSubmitting(true);
     try {
       if (isRegistering) {
-        await createUser({ name, password });
+        const data = await signUp({ name, email: normalizedEmail, password });
         setIsRegistering(false);
         setPassword("");
-        setLoginError("Registracija sėkminga. Dabar galite prisijungti.");
+        setLoginError(
+          data.session
+            ? "Registracija sėkminga."
+            : "Registracija sėkminga. Patvirtinkite el. paštą pagal jums išsiųstą nuorodą prieš prisijungdami.",
+        );
         return;
       }
 
-      const result = await getUsers();
-      const users = Array.isArray(result) ? result : result?.data;
-      if (!Array.isArray(users))
-        throw new Error("API response is not a user list");
-
-      const matchingUser = users.find((user) => user.name === name);
-      if (!matchingUser || matchingUser.password !== password) {
-        setLoginError("Neteisingas vartotojo vardas arba slaptažodis.");
-        return;
-      }
-
-      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(matchingUser));
-      onLogin(matchingUser);
-    } catch {
-      setLoginError(
-        isRegistering
-          ? "Nepavyko užregistruoti vartotojo. Patikrinkite API nustatymus."
-          : "Nepavyko patikrinti prisijungimo duomenų. Patikrinkite API nustatymus.",
-      );
+      const data = await signIn({ email: normalizedEmail, password });
+      onLogin(data.user);
+    } catch (error) {
+      setLoginError(getAuthErrorMessage(error, isRegistering));
     } finally {
       setIsSubmitting(false);
     }
@@ -66,18 +120,30 @@ function LoginPage({ onLogin }) {
     <main className="login-page">
       <form className="login-form" onSubmit={handleSubmit}>
         <h1>{isRegistering ? "Registracija" : "Prisijungimas"}</h1>
-        <label htmlFor="login-name">Vartotojo vardas</label>
+        {isRegistering && (
+          <>
+            <label htmlFor="login-name">Vartotojo vardas</label>
+            <input
+              id="login-name"
+              autoComplete="name"
+              value={userName}
+              onChange={(event) => setUserName(event.target.value)}
+            />
+          </>
+        )}
+        <label htmlFor="login-email">El. paštas</label>
         <input
-          id="login-name"
-          autoComplete="username"
-          value={userName}
-          onChange={(event) => setUserName(event.target.value)}
+          id="login-email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
         />
         <label htmlFor="login-password">Slaptažodis</label>
         <input
           id="login-password"
           type="password"
-          autoComplete="current-password"
+          autoComplete={isRegistering ? "new-password" : "current-password"}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
@@ -90,7 +156,7 @@ function LoginPage({ onLogin }) {
           {isSubmitting
             ? "Palaukite…"
             : isRegistering
-              ? "Log up"
+              ? "Registruotis"
               : "Prisijungti"}
         </button>
         <button
@@ -110,36 +176,52 @@ function LoginPage({ onLogin }) {
 }
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      return JSON.parse(sessionStorage.getItem(AUTH_STORAGE_KEY));
-    } catch {
-      return null;
-    }
-  });
-
-  if (!currentUser) {
-    return <LoginPage onLogin={setCurrentUser} />;
-  }
-
-  if (window.location.pathname === "/tasks") {
-    return (
-      <TasksPage
-        userId={currentUser.id}
-        onLogout={() => {
-          sessionStorage.removeItem(AUTH_STORAGE_KEY);
-          setCurrentUser(null);
-        }}
-      />
-    );
-  }
-
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(!supabaseConfigError);
+  const [authError, setAuthError] = useState(supabaseConfigError);
   const [count, setCount] = useState(0);
   const [showStartTable, setShowStartTable] = useState(true);
   const [weather, setWeather] = useState(null);
   const [weatherError, setWeatherError] = useState(false);
 
   useEffect(() => {
+    if (supabaseConfigError) {
+      return undefined;
+    }
+
+    let isActive = true;
+    let authEventReceived = false;
+    const subscription = onAuthStateChange((session) => {
+      authEventReceived = true;
+      if (isActive) {
+        setCurrentUser(session?.user ?? null);
+        setAuthError("");
+        setIsSessionLoading(false);
+      }
+    });
+
+    getSession()
+      .then((session) => {
+        if (isActive && !authEventReceived) {
+          setCurrentUser(session?.user ?? null);
+          setIsSessionLoading(false);
+        }
+      })
+      .catch((error) => {
+        if (isActive && !authEventReceived) {
+          setAuthError(getAuthErrorMessage(error, false));
+          setIsSessionLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser || window.location.pathname === "/tasks") return undefined;
     const controller = new AbortController();
 
     async function loadWeather() {
@@ -165,7 +247,36 @@ function App() {
 
     loadWeather();
     return () => controller.abort();
-  }, []);
+  }, [currentUser]);
+
+  if (isSessionLoading) {
+    return <main className="login-page" aria-label="Kraunama sesija" />;
+  }
+
+  if (!currentUser) {
+    return (
+      <LoginPage
+        onLogin={setCurrentUser}
+        initialError={authError}
+      />
+    );
+  }
+
+  if (window.location.pathname === "/tasks") {
+    return (
+      <TasksPage
+        authError={authError}
+        onLogout={async () => {
+          try {
+            await signOut();
+            setAuthError("");
+          } catch (error) {
+            setAuthError(getAuthErrorMessage(error, false));
+          }
+        }}
+      />
+    );
+  }
 
   const weatherDescriptions = {
     0: "Giedra",

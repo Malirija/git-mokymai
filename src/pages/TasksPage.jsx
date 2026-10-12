@@ -4,7 +4,7 @@ import './TasksPage.css'
 
 const taskFilters = ['All', 'Todo', 'In Progress', 'Done']
 
-function TasksPage({ onLogout, userId }) {
+function TasksPage({ onLogout, authError }) {
   const [tasks, setTasks] = useState([])
   const [taskName, setTaskName] = useState('')
   const [taskNameError, setTaskNameError] = useState('')
@@ -24,12 +24,7 @@ function TasksPage({ onLogout, userId }) {
     async function loadTasks() {
       try {
         const result = await getTasks()
-        const taskList = Array.isArray(result) ? result : result?.data
-        if (!Array.isArray(taskList)) {
-          throw new Error('API response is not a task list')
-        }
-        const userTasks = taskList.filter((task) => String(task.userId) === String(userId))
-        if (isActive) setTasks(userTasks)
+        if (isActive) setTasks(result)
       } catch {
         if (isActive) setLoadTasksError('Nepavyko įkelti užduočių iš duomenų bazės.')
       } finally {
@@ -41,7 +36,7 @@ function TasksPage({ onLogout, userId }) {
     return () => {
       isActive = false
     }
-  }, [userId])
+  }, [])
 
   const filteredTasks =
     selectedFilter === 'All'
@@ -62,9 +57,9 @@ function TasksPage({ onLogout, userId }) {
     setAddTaskError('')
     setIsAddingTask(true)
     try {
-      const createdTask = await createTask({ title, status: 'Todo', userId })
+      const createdTask = await createTask(title)
       if (createdTask) {
-        setTasks((currentTasks) => [...currentTasks, createdTask])
+        setTasks((currentTasks) => [createdTask, ...currentTasks])
         setTaskName('')
       } else {
         setAddTaskError('Užduotis sukurta, bet API negrąžino jos duomenų.')
@@ -77,13 +72,12 @@ function TasksPage({ onLogout, userId }) {
   }
 
   async function handleStatusChange(id, newStatus) {
-    const currentTask = tasks.find((task) => task.id === id)
-    if (!currentTask || statusTaskIds.includes(id)) return
+    if (statusTaskIds.includes(id)) return
 
     setStatusTaskError('')
     setStatusTaskIds((currentIds) => [...currentIds, id])
     try {
-      await updateTaskStatus(id, currentTask.title, newStatus, userId)
+      await updateTaskStatus(id, newStatus)
       setTasks((currentTasks) =>
         currentTasks.map((task) =>
           task.id === id ? { ...task, status: newStatus } : task
@@ -121,6 +115,7 @@ function TasksPage({ onLogout, userId }) {
           Log off
         </button>
       </div>
+      {authError && <p role="alert">{authError}</p>}
       <h1>Task Manager</h1>
       <form className="tasks-form" onSubmit={handleAddTask}>
         <input

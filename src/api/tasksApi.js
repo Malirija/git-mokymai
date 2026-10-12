@@ -1,47 +1,66 @@
-// Enter the API base URL when it is available, for example: https://api.example.com
-const API_BASE_URL = 'https://testapi.io/api/Malirija/resource'
+import { getSupabaseClient } from '../lib/supabase'
 
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  })
+const TASK_STATUSES = ['Todo', 'In Progress', 'Done']
 
-  if (!response.ok) {
-    throw new Error(`Task API request failed (${response.status})`)
+async function getAuthenticatedUserId() {
+  const { data, error } = await getSupabaseClient().auth.getSession()
+  if (error) throw error
+
+  const userId = data.session?.user?.id
+  if (!userId) throw new Error('Prisijunkite, kad galėtumėte tvarkyti užduotis.')
+  return userId
+}
+
+export async function getTasks() {
+  const { data, error } = await getSupabaseClient()
+    .from('tasks')
+    .select('id, title, status, user_id, created_at, updated_at')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function createTask(title) {
+  const normalizedTitle = title.trim()
+  if (!normalizedTitle) throw new Error('Įveskite užduoties pavadinimą.')
+
+  const userId = await getAuthenticatedUserId()
+  const { data, error } = await getSupabaseClient()
+    .from('tasks')
+    .insert({ title: normalizedTitle, user_id: userId, status: 'Todo' })
+    .select('id, title, status, user_id, created_at, updated_at')
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateTaskStatus(taskId, status) {
+  if (!TASK_STATUSES.includes(status)) {
+    throw new Error('Pasirinkta netinkama užduoties būsena.')
   }
 
-  if (response.status === 204) return null
-  return response.json()
+  const { data, error } = await getSupabaseClient()
+    .from('tasks')
+    .update({ status })
+    .eq('id', taskId)
+    .select('id, title, status, user_id, created_at, updated_at')
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) throw new Error('Užduotis nerasta arba neturite teisės ją keisti.')
+  return data
 }
 
-// GET /tasks — retrieve tasks, including their userId field.
-export function getTasks() {
-  return request('/tasks')
-}
+export async function deleteTask(taskId) {
+  const { data, error } = await getSupabaseClient()
+    .from('tasks')
+    .delete()
+    .eq('id', taskId)
+    .select('id')
+    .maybeSingle()
 
-// POST /tasks — create a task. Adjust the payload to match your API contract.
-export function createTask(task) {
-  return request('/tasks', {
-    method: 'POST',
-    body: JSON.stringify(task),
-  })
-}
-
-// PUT /tasks/:id — update a task's status.
-export function updateTaskStatus(taskId, title, status, userId) {
-  return request(`/tasks/${encodeURIComponent(taskId)}`, {
-    method: 'PUT',
-    body: JSON.stringify({ title, status, userId }),
-  })
-}
-
-// DELETE /tasks/:id — delete a task by its ID.
-export function deleteTask(taskId) {
-  return request(`/tasks/${encodeURIComponent(taskId)}`, {
-    method: 'DELETE',
-  })
+  if (error) throw error
+  if (!data) throw new Error('Užduotis nerasta arba neturite teisės ją ištrinti.')
 }

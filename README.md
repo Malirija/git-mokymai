@@ -1,336 +1,50 @@
-# React + Vite
+# React + Vite Task Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 ir Vite aplikacija su Supabase Auth prisijungimu, užduočių valdymu, pradine testine lentele ir Vilniaus orų prognoze.
 
-Currently, two official plugins are available:
+## Paleidimas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Įdiekite priklausomybes:
 
-## React Compiler
+   ```bash
+   npm install
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. Nukopijuokite `.env.example` į `.env.local` ir įrašykite savo Supabase projekto duomenis:
 
-## Expanding the ESLint configuration
+   ```dotenv
+   VITE_SUPABASE_URL=https://jusu-projekto-id.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=jusu-publishable-raktas
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+   Naudokite tik Supabase publishable / anon raktą. `service_role` ar secret rakto į naršyklės aplikaciją nedėkite. `.env.local` ignoruojamas per Git.
 
-AI generated:
-# React + Vite Demo Project
+3. Paleiskite kūrimo serverį:
 
-Paprastas React + Vite projektas, išplėstas papildomu pradiniu ekranu, navigacija tarp ekranų ir filtruojama lentele.
+   ```bash
+   npm run dev
+   ```
 
----
+Kitos komandos: `npm run lint`, `npm run build`, `npm run preview`.
 
-# Naudojamos technologijos
+## Supabase integracija
 
-- React
-- Vite
-- JavaScript (ES6+)
-- CSS
-- React Hooks (`useState`)
+Duomenų bazės schema, RLS politikos, `handle_new_user()` profilį kuriantis trigeris ir `set_tasks_updated_at` trigeris jau turi būti sukurti Supabase projekte. Ši aplikacija jų nekurs ir nekeis.
 
----
+- Registracija naudoja Supabase Auth el. paštą, slaptažodį ir `options.data.name`. Profilį sukuria duomenų bazės trigeris.
+- Prisijungimas ir atsijungimas vyksta per Supabase Auth. Supabase klientas atkuria sesiją ir stebi jos pasikeitimus.
+- Užduotys skaitomos iš `public.tasks`, rūšiuojamos pagal `created_at` mažėjančia tvarka. RLS apriboja matomumą savininkui.
+- Naujos užduotys sukuriamos su prisijungusio vartotojo `user_id` ir `Todo` būsena. Būsenos: `Todo`, `In Progress`, `Done`.
+- `id`, `created_at` ir `updated_at` sukuria / atnaujina duomenų bazė.
 
-# Projekto funkcionalumas
+Supabase klientas ir aplinkos kintamųjų patikra yra `src/lib/supabase.js`. Auth funkcijos yra `src/api/usersApi.js`, užduočių funkcijos – `src/api/tasksApi.js`.
 
-## 1. Pradinis ekranas
+## Ekranai
 
-Paleidus aplikaciją vartotojas mato:
+- `/` rodo prisijungimą, jei nėra aktyvios sesijos. Prisijungus rodoma dabartinė pradžios lentelė, orai ir demonstracinis Vite/React ekranas.
+- Nuoroda „Open Task Manager“ atveria `/tasks`. Task Manager leidžia kurti užduotis, filtruoti pagal būseną, ją keisti ir ištrinti.
+- Orų prognozė naudoja viešą Open-Meteo API.
 
-- tekstą **„Pradedam cia“**
-- testinę lentelę
-- filtravimo lauką
-- mygtuką **click**
+## Saugumas
 
-### Veiksmas
-
-Paspaudus:
-
-```text
-click
-```
-
-vartotojas pereina į pagrindinį ekraną.
-
----
-
-## 2. Lentelė
-
-Lentelė turi:
-
-### Stulpelius
-
-| Vardas | Miestas | Statusas |
-|---------|---------|---------|
-| Jonas | Vilnius | Aktyvus |
-| Petras | Kaunas | Neaktyvus |
-| Ona | Klaipėda | Aktyvus |
-| Tomas | Šiauliai | Laukiantis |
-
-### Filtravimas
-
-Filtravimas vykdomas pagal pirmą stulpelį:
-
-```text
-Vardas
-```
-
-Pavyzdžiai:
-
-```text
-jo
-```
-
-rezultatas:
-
-```text
-Jonas
-```
-
----
-
-## 3. Pagrindinis ekranas
-
-Pereinus iš pirmojo ekrano rodoma:
-
-- Vite demonstracinė informacija
-- Hero paveikslėliai
-- Counter mygtukas
-- Atgal mygtukas
-
----
-
-## 4. Counter
-
-Mygtukas:
-
-```text
-Count is X
-```
-
-kiekvienu paspaudimu didina skaitiklį:
-
-```js
-setCount((count) => count + 1)
-```
-
----
-
-## 5. Grįžimas atgal
-
-Mygtukas:
-
-```text
-Atgal
-```
-
-grąžina į pirmą ekraną:
-
-```js
-setShowStartTable(true)
-```
-
----
-
-# Projekto struktūra
-
-```text
-src/
-├── assets/
-│   ├── hero.png
-│   ├── react.svg
-│   └── vite.svg
-│
-├── components/
-│   ├── TestTable.jsx
-│   └── TestTable.css
-│
-├── App.jsx
-├── App.css
-├── index.css
-└── main.jsx
-```
-
----
-
-# Komponentai
-
-## App
-
-Pagrindinis aplikacijos komponentas.
-
-Atsakingas už:
-
-- navigaciją tarp ekranų
-- counter būseną
-- pradinio ekrano rodymą
-
-Naudojamos būsenos:
-
-```js
-const [count, setCount] = useState(0)
-
-const [showStartTable, setShowStartTable] = useState(true)
-```
-
----
-
-## TestTable
-
-Atsakingas už:
-
-- testinių duomenų atvaizdavimą
-- filtravimą pagal vardą
-
-Failai:
-
-```text
-src/components/TestTable.jsx
-src/components/TestTable.css
-```
-
----
-
-# Dizaino sistema
-
-Projektas naudoja CSS kintamuosius.
-
-Pagrindiniai:
-
-```css
---accent
---accent-bg
---accent-border
---border
---text
---text-h
---bg
-```
-
-### Spalvinė schema
-
-- Violetinis akcentas
-- Šviesi tema
-- Automatinis Dark Mode palaikymas
-
----
-
-# Paleidimas
-
-## Priklausomybių įrašymas
-
-```bash
-npm install
-```
-
-## Development režimas
-
-```bash
-npm run dev
-```
-
-## Build
-
-```bash
-npm run build
-```
-
-## Preview
-
-```bash
-npm run preview
-```
-
----
-
-# Kodo stiliaus taisyklės
-
-## Komponentai
-
-Naujus komponentus kurti:
-
-```text
-src/components
-```
-
-Kiekvienam komponentui:
-
-```text
-ComponentName.jsx
-ComponentName.css
-```
-
-Pavyzdys:
-
-```text
-UserList.jsx
-UserList.css
-```
-
----
-
-## CSS
-
-Rekomenduojama:
-
-- naudoti esamus CSS kintamuosius
-- vengti hardcodintų spalvų
-- išlaikyti esamą violetinę stilistiką
-
----
-
-## React
-
-Naudoti:
-
-- Functional Components
-- Hooks (`useState`, `useEffect`)
-
-Vengti:
-
-- Class Components
-
----
-
-# Tolimesnės plėtros idėjos
-
-Galimi ateities patobulinimai:
-
-- React Router
-- CRUD formos
-- API integracija
-- Lentelės rūšiavimas
-- Puslapiavimas (Pagination)
-- Duomenų saugojimas backend'e
-- React Context arba Zustand
-- Unit testai (Vitest)
-- E2E testai (Playwright)
-
----
-
-# Projekto būsena
-
-Statusas:
-
-```text
-MVP / Development
-```
-
-Įgyvendinta:
-
-- Pradinis ekranas
-- Navigacija tarp ekranų
-- Counter
-- Atgal mygtukas
-- Filtruojama lentelė
-- Responsive stiliai
-- Dark Mode palaikymas
-
-Neįgyvendinta:
-
-- API
-- Autentifikacija
-- Duomenų bazė
-- Routing
-- Testai
+RLS ir Supabase Auth yra prieigos kontrolės pagrindas. Slaptažodžiai nėra saugomi `public` lentelėse ar rankiniu būdu naršyklės saugykloje. Kliento pusėje naudokite tik publishable raktą; jokiu būdu neįtraukite `service_role` rakto.
